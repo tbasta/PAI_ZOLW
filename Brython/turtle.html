@@ -1,0 +1,234 @@
+﻿<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+
+<script type="text/javascript" src="/src/brython.js"></script>
+<script type="text/javascript" src="/src/brython_stdlib.js"></script>
+
+<script id="python_script" type="text/python">
+import sys
+import traceback
+from browser import document, timer
+
+FIRST_TIME = True
+def inform(*args):
+    document["status-info"].html = "".join(args)
+
+def _write(*args):
+    document["turtle-print-output"].html += "".join(args)
+def __write(*args):
+    document["turtle-print-output"].html += '<span class="error">' + "".join(args) + "</span>"
+
+sys.stdout.write = _write
+sys.stderr.write = __write
+
+def clear_print():
+    document["turtle-print-output"].html = ""
+
+def run_code(ev):
+    global FIRST_TIME
+    if FIRST_TIME:
+        FIRST_TIME = False
+        inform("Importing turtle module for the first time and processing; please wait")
+    else:
+        inform("Processing")
+    document["run"].class_name = "btn-disabled"
+    # delay to allow updated DOM with above text to be shown.
+    timer.set_timeout(exec_code, 1)
+
+document["run"].bind("click", run_code)
+
+def exec_code():
+    _code= document["source"].text
+    try:
+        exec(_code)
+    except:
+        try:
+            traceback.print_exc()
+        except:
+            print("could not print traceback")
+    document["clear"].class_name = "btn-enabled"
+    document["replay-scene"].class_name = "btn-enabled"
+    inform("")
+
+def delayed_clear():
+    from turtle import restart
+    restart()
+    inform("")
+    document["run"].class_name = "btn-enabled"
+    document["replay-scene"].class_name = "btn-disabled"
+    document["clear"].class_name = "btn-disabled"
+    clear_print()
+
+def clear(ev):
+    global FIRST_TIME
+    if FIRST_TIME:
+        FIRST_TIME = False
+        inform("Importing turtle module for the first time and processing; please wait")
+        document["run"].class_name = "btn-disabled"
+    # delay to allow updated DOM with above text to be shown.
+    timer.set_timeout(delayed_clear, 1)
+
+document["clear"].bind("click", clear)
+
+def replay(ev):
+    # importing turtle earlier slows down the loading
+    # of this page
+    from turtle import replay_scene
+    replay_scene()
+
+document["replay-scene"].bind("click", replay)
+
+def copy_content(ev):
+    choice = document["demo_selector"].value
+    document["source"].text = document['demo'+ str(choice)].text
+    document["info"].html = document['info'+ str(choice)].html
+    clear(ev)
+
+document["demo_selector"].bind("change", copy_content)
+
+# Start with first demo
+document["source"].text = document["demo1"].text
+document["info"].html = document["info1"].html
+</script>
+
+<style>
+  h1, h2, h3, h4 {
+    color: blue;
+  }
+  pre {
+    max-width: 800px;
+    overflow: auto;
+    word-break: normal !important;
+    word-wrap: normal !important;
+    white-space: pre !important;
+    font-weight: bold;
+  }
+  pre#source {
+    border: 1px solid blue;
+    background-color:antiquewhite;
+  }
+  pre#turtle-docstring {
+    background-color: white;
+    max-width: 800px;
+  }
+  hr {
+    clear: both;
+  }
+  #info {
+    max-width: 800px;
+    border: 1px dotted black;
+  }
+
+  pre#turtle-print-output {
+    background-color: black;
+    color: yellow;
+    font-weight: bolder;
+    min-height: 50px;
+    height: auto;
+    max-height: 200px;
+  }
+
+  button {
+    margin: 20px;
+    padding: 10px;
+  }
+  #status-info {
+    color: darkred;
+    font-weight: bolder;
+  }
+  .error, .not-implemented {
+    color: red;
+  }
+  .btn-enabled {
+    color: black;
+    background-color: #c0c0c0;
+  }
+
+  .btn-disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+    color: #c0c0c0;
+    background-color: #ffffff;
+  }
+</style>
+
+</head>
+
+<body onload="brython(1)">
+<h1>Turtle demo</h1>
+
+<p>Select the desired demo.
+<select id="demo_selector" autocomplete="off">
+  <option value="1">Square with default turtle</option>
+</select>
+<br>
+Note that the content is editable.
+</p>
+<div id="info"></div>
+
+<p><button id="run" class="btn-enabled">Run</button> <span id="status-info"></span>
+  <button id="clear" class="btn-disabled">Clear</button>
+  <button id="replay-scene" class="btn-disabled">Replay scene</button></p>
+<pre id="turtle-print-output"></pre>
+
+<pre id="source" style="float:left" contenteditable="true">
+</pre>
+
+<div id="turtle-div" style="float:left;border:1px solid green; margin-left:50px;"> </div>
+
+<div id='info1' style='display:none'>
+<h2>Simple demo</h2>
+<p>When you click on <b>Run</b>, Brython translates the Python code into
+  Javascript, which is then being executed in a single thread. The end result of
+  turtle module computations is the creation of an aminated <em>scene</em> that
+  uses SVG. This scene is then added to the DOM so that it can be seen.</p>
+
+<p>The first time you do this, Brython has to do extra work to translate the
+turtle module from Python into Javascript; subsequent runs will be faster.</p>
+
+  <p>As soon as a scene has been created, the <b>Run</b> button will be disabled
+  and two new buttons will be enabled: one to clear everything so that the program
+  could be modified and executed again, and the second which can be used to show
+  the scene that was created as many times as desired, without requiring additional
+computation.</p>
+<p>When you select another demonstration, everything will be cleared automatically
+  without having to click on the <b>Clear</b> button.</p>
+</div>
+
+<div id='demo1' style="display:none">from browser import document
+import turtle
+turtle.set_defaults(
+    turtle_canvas_wrapper = document['turtle-div']
+)
+t = turtle.Turtle()
+
+t.width(5)
+
+for c in ['red', '#00ff00', '#fa0', 'rgb(0,0,200)']:
+    t.color(c)
+    t.forward(100)
+    t.left(90)
+
+# dot() and write() do not require the pen to be down
+t.penup()
+t.goto(-30, -100)
+t.dot(40, 'rgba(255, 0, 0, 0.5')
+t.goto(30, -100)
+t.dot(40, 'rgba(0, 255, 0, 0.5')
+t.goto(0, -70)
+t.dot(40, 'rgba(0, 0, 255, 0.5')
+
+t.goto(0, 125)
+t.color('purple')
+t.write("I love Brython!", font=("Arial", 20, "normal"))
+
+
+turtle.done()
+</div>
+
+
+</body>
+
+</html>

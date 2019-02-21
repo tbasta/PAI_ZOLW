@@ -1,0 +1,94 @@
+<html>
+<head>
+    <script type="text/javascript" src="/src/brython.js"></script>
+    <script type="text/javascript" src="/src/brython_stdlib.js"></script>
+    <style>
+        textarea {
+            resize: none;
+        }
+        .mybutton {
+            font-size: 24px;
+            width: 100%;
+        }
+        .codeTextarea {
+            width: 100%;
+        }
+        .lowerContainer {
+            background-color: gainsboro;
+            width: 80%;
+            height: 100%;
+            float: left;
+        }
+        .upperContainer {
+            background-color: aliceblue;
+            width: 20%;
+            height: 100%;
+            float: left;
+        }
+        </style>
+</head>
+
+
+<body onload="brython()">
+<script id="python_script" type="text/python">
+        import sys
+        import traceback
+        from browser import document, timer, alert
+
+        def create_command(_cmd):
+            cmd = open('Brython.py').read()
+            _cmd = _cmd.replace('\n', '\n    ')
+            cmd = cmd.replace("_code", _cmd)
+            return cmd
+            
+        
+        def run_code(ev):
+            timer.set_timeout(exec_code, 1)
+        
+        def exec_code():
+            document["tmp"].value = create_command(document["codeTextarea"].value)
+            try:
+                exec(document["tmp"].value)
+            except:
+                try:
+                    traceback.print_exc()
+                except:
+                    print("could not print traceback")
+        
+        document["mybutton"].bind("click", run_code)
+
+    </script>
+
+<div id="upperContainer" class="upperContainer">
+    <textarea id="codeTextarea" class="codeTextarea" placeholder="put here some turtle code. Use turtle object t and known commands." rows="50" cols="50" maxsize="2500"></textarea>
+
+    <button id="mybutton" class="mybutton">Pracuj, ¿ó³wiu!</button> <!--onclick="replaceCmd()"-->
+    <textarea id="tmp" style="width: 100%; height: 17%"></textarea>
+    <script>
+        function replaceCmd() {
+            var cmd =
+                "from browser import document, alert" +
+                "\nimport turtle" +
+                "\nturtle.set_defaults(turtle_canvas_wrapper = document['lowerContainer'])" +
+                "\nt = turtle.Turtle()" +
+                "\nt.width(5)" +
+                "\ntry:" +
+                "\n\t_code" +
+                "\n\tturtle.done()" +
+                "\nexcept:" +
+                "\n\ttry:" +
+                "\n\t\ttraceback.print_exc()" +
+                "\n\t\talert('Nieprawid³owy kod!')" +
+                "\n\texcept:" +
+                "\n\t\talert('Nie mo¿na wykonaæ kodu')" +
+                "\ndocument['mybutton'].bind('click', runcode)";
+            document.getElementById("tmp").value = cmd;
+            document.getElementById("tmp").value = document.getElementById("tmp").value.replace("_code", document.getElementById("codeTextarea").value);
+        }
+    </script>
+</div>
+<div id="lowerContainer" class="lowerContainer">
+
+</div>
+</body>
+</html>
